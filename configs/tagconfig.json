@@ -1,0 +1,7 @@
+{
+    "name": "myAppSecrets",
+    "appid": "anIdForMyApp",
+    "appfunc": "api",
+    "appenv": "dev",
+    "dataclassification": "confidential"
+}
