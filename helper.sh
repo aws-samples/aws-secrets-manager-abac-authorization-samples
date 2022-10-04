@@ -20,6 +20,10 @@ cdk_deploy_common(){
     echo ""
     npm install
 
+    echo "--> jest Testing"
+    echo ""
+    npm test
+    
     echo "--> Building"
     echo ""
     npm ci
@@ -47,7 +51,7 @@ cdk_deploy_on_cloud_sampleapp(){
     echo "--> Deploying sample application stack... "
     echo ""
     echo "--> Deploying an IAM role used by a lambda to fetch the secrets created in common stack. "
-    echo "--> Deploying Serverles DB test sample lambda connection. "
+    echo "--> Deploying Serverless DB test sample lambda connection. "
     echo ""
     npx cdk deploy SampleAppOnAWSStack --require-approval=never
 }
@@ -260,8 +264,8 @@ case $1 in
   cdk_deploy_common
   ;;
 "on-aws")
-  cdk_deploy_on_cloud_sampleapp
   update_secrets_value
+  cdk_deploy_on_cloud_sampleapp
   ;;
 "on-prem")
   cdk_deploy_on_prem_rolesanywhere
@@ -275,6 +279,7 @@ case $1 in
 "install-all")
   pre-req
   cdk_deploy_common
+  update_secrets_value
   cdk_deploy_on_cloud_sampleapp
   cdk_deploy_on_prem_rolesanywhere
   client_prepare_for_roles_anywhere

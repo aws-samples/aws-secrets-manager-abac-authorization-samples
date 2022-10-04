@@ -5,9 +5,9 @@
 
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import {commonSecretsAndIamPolicyStack} from '../lib/commonSecretsAndIamPolicy-stack';
-import {RolesanywhereabacStack} from '../lib/forOnPremAppRolesAnyWhereAbac-stack'
-import {SampleAppOnAWSStack} from '../lib/forSampleAppOnAws-stack'
+import { commonSecretsAndIamPolicyStack } from '../lib/commonSecretsAndIamPolicy-stack';
+import { RolesanywhereabacStack } from '../lib/forOnPremAppRolesAnyWhereAbac-stack'
+import { SampleAppOnAWSStack } from '../lib/forSampleAppOnAws-stack'
 import { AwsSolutionsChecks } from "cdk-nag";
 
 const app = new cdk.App();

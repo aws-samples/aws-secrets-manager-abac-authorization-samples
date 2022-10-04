@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: MIT-0
 
 import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps,Tags } from 'aws-cdk-lib';
-import { Construct, DependencyGroup } from 'constructs';
+import { Construct } from 'constructs';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import {Key} from 'aws-cdk-lib/aws-kms';
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as fs from "fs";
 import { Peer, Port, SecurityGroup, SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AuroraMysqlEngineVersion, Credentials, DatabaseCluster, DatabaseClusterEngine, ServerlessCluster, ServerlessClusterAttributes } from 'aws-cdk-lib/aws-rds';
+import { AuroraMysqlEngineVersion, Credentials, DatabaseClusterEngine, ServerlessCluster } from 'aws-cdk-lib/aws-rds';
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import { Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
 import path = require('path');
@@ -176,7 +175,7 @@ export class SampleAppOnAWSStack extends Stack {
               "ec2:AssignPrivateIpAddresses",
               "ec2:UnassignPrivateIpAddresses"
             ],
-          resources: [vpc.vpcArn]
+          resources: ["*"]
           }),
         ]
       });
@@ -248,7 +247,7 @@ export class SampleAppOnAWSStack extends Stack {
       },
       {
         id: 'AwsSolutions-IAM5',
-        reason: 'Suppressing finding due to LogRetention lambda created by Lambda using resource as `*`.'
+        reason: 'Suppressing finding due to LogRetention lambda and VPC ENI attachment permission created by Lambda using resource as `*`.'
       }
     ]);
   }

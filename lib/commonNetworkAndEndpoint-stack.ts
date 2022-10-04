@@ -1,8 +1,8 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import { CfnOutput, StackProps } from 'aws-cdk-lib';
-import { SubnetType, Vpc as EC2Vpc, InterfaceVpcEndpointAwsService, ISubnet, FlowLog, FlowLogResourceType, FlowLogDestination } from 'aws-cdk-lib/aws-ec2';
+import { StackProps } from 'aws-cdk-lib';
+import { SubnetType, Vpc as EC2Vpc, InterfaceVpcEndpointAwsService, FlowLog, FlowLogResourceType, FlowLogDestination } from 'aws-cdk-lib/aws-ec2';
 import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { LogGroup } from 'aws-cdk-lib/aws-logs';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';

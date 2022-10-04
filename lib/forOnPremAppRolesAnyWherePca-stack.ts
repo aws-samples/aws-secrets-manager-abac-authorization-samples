@@ -1,7 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import { CfnOutput, Stack, Duration, RemovalPolicy } from "aws-cdk-lib";
+import { Stack, Duration, RemovalPolicy } from "aws-cdk-lib";
 import { Construct } from 'constructs';
 import {
   CertificateAuthority,
@@ -12,8 +12,6 @@ import {
 } from 'aws-cdk-lib/aws-acmpca';
 import { Effect, PolicyStatement, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Bucket, BucketEncryption, BucketAccessControl, BlockPublicAccess } from "aws-cdk-lib/aws-s3";
-import { NagSuppressions } from 'cdk-nag';
-
 
 export enum PrivateCertificateAuthorityStatus {
   ACTIVE = 'ACTIVE',
