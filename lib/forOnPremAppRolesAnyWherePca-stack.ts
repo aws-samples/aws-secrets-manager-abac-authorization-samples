@@ -11,7 +11,7 @@ import {
   ICertificateAuthority,
 } from 'aws-cdk-lib/aws-acmpca';
 import { Effect, PolicyStatement, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Bucket, BucketEncryption, BucketAccessControl, BlockPublicAccess } from "aws-cdk-lib/aws-s3";
+import { Bucket, BucketEncryption, BucketAccessControl, BlockPublicAccess, ObjectOwnership } from "aws-cdk-lib/aws-s3";
 
 export enum PrivateCertificateAuthorityStatus {
   ACTIVE = 'ACTIVE',
@@ -49,6 +49,7 @@ export class PcaStackForRolesAnywhere extends Construct {
       //removalPolicy: RemovalPolicy.RETAIN,
       enforceSSL: true,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      objectOwnership: ObjectOwnership.OBJECT_WRITER
     });
 
     const crlBucket = new Bucket(this, 'CrlBucket', {

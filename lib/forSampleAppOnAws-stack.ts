@@ -97,7 +97,7 @@ export class SampleAppOnAWSStack extends Stack {
       enableDataApi: true,
       defaultDatabaseName: this + 'serverlessClusterForSampleApp',
       removalPolicy: RemovalPolicy.SNAPSHOT,
-      deletionProtection: true,
+      deletionProtection: false,
       
     });
     serverlessCluster.addRotationSingleUser({automaticallyAfter: Duration.days(30)});
@@ -248,6 +248,10 @@ export class SampleAppOnAWSStack extends Stack {
       {
         id: 'AwsSolutions-IAM5',
         reason: 'Suppressing finding due to LogRetention lambda and VPC ENI attachment permission created by Lambda using resource as `*`.'
+      },
+      {
+        id: 'AwsSolutions-RDS10', 
+        reason: 'Deletion Protection is displayed so user can perform easy clean up of resources.'
       }
     ]);
   }

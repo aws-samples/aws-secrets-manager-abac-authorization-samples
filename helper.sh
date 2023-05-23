@@ -111,6 +111,7 @@ update_aws_cli_config () {
 cat >> config <<EOF
 
 [profile developer]
+region = $AWS_REGION
 credential_process = $HOME/.aws/aws_signing_helper credential-process
     --certificate $HOME/.aws/client_cert.pem
     --private-key $HOME/.aws/my_private_key.clear.key
@@ -123,7 +124,6 @@ cat config
 }   
 
 does_assume_role_work () {
-    AWS_REGION="ap-southeast-2"
     PROFILE_NAME="developer"
     aws_cli="aws --region $AWS_REGION --profile $PROFILE_NAME"
 
@@ -132,10 +132,16 @@ does_assume_role_work () {
         echo "--> Credentials fetch didnt work. "
     else 
         ROLEANYWHERE=$($aws_cli sts get-caller-identity --query Arn --output text)
-        echo "--> Assume role worked and $ROLEANYWHERE"
-        echo "    can be used by the application using AWS CLI profile '$PROFILE_NAME'. "
+        echo "--> Assume role worked for:"
+        echo $ROLEANYWHERE
+        echo ""
+        echo "--> This role can be used by the application using AWS CLI profile '$PROFILE_NAME'. "
+        echo ""
+        echo "--> For instance, the following output illustrates how to access secret values using an AWS CLI profile '$PROFILE_NAME'. "
+        SECRET_VALUE=$($aws_cli secretsmanager get-secret-value --secret-id $SECRET_ARN  | jq -r '.SecretString')
+        echo ""
+        echo "--> Sample AWS CLI: aws secretsmanager get-secret-value --secret-id \$SECRET_ARN --profile developer"
     fi
-
 }
 
 client_prepare_for_roles_anywhere(){
@@ -150,19 +156,25 @@ client_prepare_for_roles_anywhere(){
     else
         echo "--> AWS CLI Found "
         echo ""
+        echo "--> Getting current AWS region "
+        echo ""
+        AWS_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+        echo $AWS_REGION
         echo "--> Using Tags to create SSM ARNs "
         echo ""
         cd configs
         SSM_PARA_PREFIX=$(jq -r '"/" + .appid + "/" + .appfunc + "/" + .appenv + "/" + .name' tagconfig.json)
-        echo $SSM_PARA_PREFIX
+        echo "SSM_PARA_PREFIX: $SSM_PARA_PREFIX"
         IAM_ROLE_ARN=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-onPremAppRoleSsmParam --query Parameter.Value --output text)
-        echo $IAM_ROLE_ARN
+        echo "IAM_ROLE_ARN: $IAM_ROLE_ARN"
         PCA_ARN=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-pcaArnSsmParam --query Parameter.Value --output text)
-        echo $PCA_ARN
+        echo "PCA_ARN: $PCA_ARN"
         ROLE_ANYWHERE_TRUST_ANCHOR_ARN=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-rolesAnywhereTrustAnchorSsmParam --query Parameter.Value --output text)
-        echo $ROLE_ANYWHERE_TRUST_ANCHOR_ARN
+        echo "ROLE_ANYWHERE_TRUST_ANCHOR_ARN: $ROLE_ANYWHERE_TRUST_ANCHOR_ARN"
         ROLE_ANYWHERE_PROFILE=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-rolesAnywhereProfileSsmParam --query Parameter.Value --output text )
-        echo $ROLE_ANYWHERE_PROFILE
+        echo "ROLE_ANYWHERE_PROFILE: $ROLE_ANYWHERE_PROFILE"
+        SECRET_ARN=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-AsmSsmPara --query Parameter.Value --output text)
+        echo "SECRET_ARN: $SECRET_ARN"
         echo ""
         echo "--> Downloading aws_signing_helper"
         cd ..
@@ -218,7 +230,6 @@ client_prepare_for_roles_anywhere(){
         does_assume_role_work
 
     fi
-
 }
 
 update_secrets_value() {
@@ -258,6 +269,71 @@ update_secrets_value() {
   fi;
 }
 
+on-aws-test-simple() {
+    echo "--> Check if AWS CLI is installed"
+    if ! [ -x "$(command -v aws)" ]; then
+        echo 'Error: aws cli is not installed.' >&2
+        exit 1
+    elif ! [ -x "$(command -v jq)" ]; then
+        echo 'Error: jq is not installed.' >&2
+        exit 1
+    else
+        echo ""
+        echo "--> AWS CLI Found "
+        echo ""
+        echo "--> Using Tags to create Lambda function name and invoking a test "
+        echo ""
+        cd configs
+        TEST_LAMBDA_FUNCTION_NAME=$(jq -r '"asmFetchLambda" + "_" + .appid + "_" + .appfunc + "_" + .appenv' tagconfig.json)
+        TEST_LAMBDA_FUNCTION_OUTPUT=$(aws lambda invoke --function-name $TEST_LAMBDA_FUNCTION_NAME --payload '{"key1":"value1"}' response.txt)
+        echo ""
+        echo "--> Checking the lambda invoke response..... "
+        echo ""
+        if [ "$(echo $TEST_LAMBDA_FUNCTION_OUTPUT | jq -r .StatusCode)" -eq 200 ]; then
+            echo "--> The status code is 200"
+            echo ""
+            echo "--> Reading response from test function: "
+            cat response.txt
+            echo ""
+            echo ""
+            echo "--> Response shows database connection is working from lambda function using secret. "
+        else
+            echo "--> The status code is not 200"
+        fi
+        rm -rf response.txt
+        cd ..
+    fi
+}
+
+on-prem-test-simple () {
+    PROFILE_NAME="developer"
+    AWS_REGION=$(aws ec2 describe-availability-zones --output text --query 'AvailabilityZones[0].[RegionName]')
+    aws_cli="aws --region $AWS_REGION --profile $PROFILE_NAME"
+    cd configs
+    SSM_PARA_PREFIX=$(jq -r '"/" + .appid + "/" + .appfunc + "/" + .appenv + "/" + .name' tagconfig.json)
+    SECRET_ARN=$(aws ssm get-parameter --name $SSM_PARA_PREFIX-AsmSsmPara --query Parameter.Value --output text)
+    cd ..
+
+    echo "--> Checking credentials ..."
+    if ! $aws_cli sts get-caller-identity; then
+        echo "--> Credentials fetch didnt work. "
+    else 
+        ROLEANYWHERE=$($aws_cli sts get-caller-identity --query Arn --output text)
+        echo "--> Assume role worked for:"
+        echo $ROLEANYWHERE
+        echo ""
+        echo "--> This role can be used by the application using AWS CLI profile '$PROFILE_NAME'. "
+        echo ""
+        echo "--> For instance, the following output illustrates how to access secret values using an AWS CLI profile '$PROFILE_NAME'. "
+        SECRET_VALUE=$($aws_cli secretsmanager get-secret-value --secret-id $SECRET_ARN  | jq -r '.SecretString')
+        echo ""
+        echo "--> Sample AWS CLI: aws secretsmanager get-secret-value --secret-id \$SECRET_ARN --profile \$PROFILE_NAME"
+        echo "-------Output-------"
+        echo $SECRET_VALUE | jq .
+        echo "-------Output-------"
+    fi
+}
+
 case $1 in
 "prepare")
   pre-req
@@ -284,6 +360,12 @@ case $1 in
   cdk_deploy_on_prem_rolesanywhere
   client_prepare_for_roles_anywhere
   ;;
+"on-aws-test")
+  on-aws-test-simple
+  ;;
+"on-prem-test")
+  on-prem-test-simple
+  ;;    
 *) 
   echo "#######################################################################################################"
   echo "$Usage: "
@@ -307,6 +389,10 @@ case $1 in
   echo "# ./helper.sh client-profile-setup (Updates the client AWS CLI to use IAM Role Anywhere). "
   echo ""
   echo "# ./helper.sh install-all (Deploy all CDK stacks). "
+  echo ""
+  echo "# ./helper.sh on-aws-test (Test sample app on Lambda access to Secret). "
+  echo ""
+  echo "# ./helper.sh on-prem-test (Test IAM RoleAnyWhere profile access to Secret). "
   echo ""
   echo "#######################################################################################################"
   ;;
