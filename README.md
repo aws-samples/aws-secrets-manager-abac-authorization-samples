@@ -183,8 +183,8 @@ Sample output should be like this:
 ## Contributors
 
 ```
-Eric Swamy, Security Consultant, AWS Professional Services
-Adesh Gairola, Security Consultant, AWS Professional Services
+Eric Swamy, Senior Security Consultant, AWS Professional Services
+Adesh Gairola, Senior Security Consultant, AWS Professional Services
 ```
 
 ## Security
